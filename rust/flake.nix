@@ -1,5 +1,5 @@
 {
-  description = "A very basic flake for rust projects";
+  description = "A simple rust flake using rust-overlay and craneLib";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";

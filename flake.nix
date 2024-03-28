@@ -6,7 +6,7 @@
     templates = {
       rust = {
         path = ./rust;
-        description = "A simple rust template using craneLib";
+        description = "A simple rust template using craneLib and rust-overlay";
       };
     };
   };
