@@ -45,24 +45,24 @@
         src = craneLib.cleanCargoSource (craneLib.path ./.);
         commonArgs = {
           inherit src;
-          buildInputs = with pkgs; [zlib]; # Inputs required for the TARGET system
-          nativeBuildInputs = with pkgs; [cmake]; # Intputs required for the HOST system
+          buildInputs = with pkgs; [] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [libiconv]; # Inputs required for the TARGET system
+          # nativeBuildInputs = []; # Intputs required for the HOST system
           # This is often requird for any ffi based packages that use bindgen
           # LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
           # For using pkg-config that many libraries require
           # PKG_CONFIG_PATH = lib.makeSearchPath "lib/pkgconfig" (with pkgs;[ openssl.dev zlib.dev ]);
         };
-        cargoArtefacts = craneLib.buildDepsOnly commonArgs;
+        cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
         hello = craneLib.buildPackage (commonArgs
           // {
-            inherit cargoArtefacts;
+            inherit cargoArtifacts;
           });
       in {
         checks = {
           hello-clippy = craneLib.cargoClippy (commonArgs
             // {
-              inherit cargoArtefacts;
+              inherit cargoArtifacts;
               cargoClippyExtraArgs = "--all-targets -- --deny warnings";
             });
           hello-fmt = craneLib.cargoFmt {
@@ -70,7 +70,7 @@
           };
           hello-nextest = craneLib.cargoNextest (commonArgs
             // {
-              inherit cargoArtefacts;
+              inherit cargoArtifacts;
               partitions = 1;
               partitionType = "count";
             });
@@ -89,7 +89,8 @@
             buildInputs = [];
             nativeBuildInputs = [];
             packages = with pkgs; [
-              just
+              cargo-nextest
+              cargo-criterion
             ];
           };
       }
