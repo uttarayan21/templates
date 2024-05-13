@@ -45,7 +45,14 @@
         src = craneLib.cleanCargoSource (craneLib.path ./.);
         commonArgs = {
           inherit src;
-          buildInputs = with pkgs; [] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [libiconv]; # Inputs required for the TARGET system
+          buildInputs = with pkgs;
+            []
+            ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
+              libiconv
+              # pkgs.darwin.apple_sdk.frameworks.Security
+              # pkgs.darwin.apple_sdk.frameworks.CoreServices
+              # pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
+            ]; # Inputs required for the TARGET system
           # nativeBuildInputs = []; # Intputs required for the HOST system
           # This is often requird for any ffi based packages that use bindgen
           # LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
