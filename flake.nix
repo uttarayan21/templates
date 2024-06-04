@@ -4,9 +4,13 @@
   '';
   outputs = {self}: {
     templates = {
-      rust = {
-        path = ./rust;
+      rust.crate = {
+        path = ./rust/main;
         description = "A simple rust template using craneLib and rust-overlay";
+      };
+      rust.lib = {
+        path = ./rust/lib;
+        description = "A simple rust library template using craneLib and rust-overlay";
       };
     };
   };

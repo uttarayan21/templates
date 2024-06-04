@@ -60,11 +60,6 @@
           # PKG_CONFIG_PATH = lib.makeSearchPath "lib/pkgconfig" (with pkgs;[ openssl.dev zlib.dev ]);
         };
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-
-        hello = craneLib.buildPackage (commonArgs
-          // {
-            inherit cargoArtifacts;
-          });
       in {
         checks = {
           hello-clippy = craneLib.cargoClippy (commonArgs
@@ -82,16 +77,8 @@
               partitionType = "count";
             });
         };
-        packages = {
-          default = hello;
-        };
 
-        apps.default = flake-utils.lib.mkApp {
-          drv = hello;
-        };
-
-        devShells.default =
-          (craneLib.overrideToolchain stableToolchainWithRustAnalyzer).devShell commonArgs
+        devShells.default = (craneLib.overrideToolchain stableToolchainWithRustAnalyzer).devShell (commonArgs
           // {
             buildInputs = [];
             nativeBuildInputs = [];
@@ -99,7 +86,7 @@
               cargo-nextest
               cargo-criterion
             ];
-          };
+          });
       }
     );
 }
