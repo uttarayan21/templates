@@ -15,7 +15,6 @@
   };
 
   outputs = {
-    self,
     crane,
     flake-utils,
     nixpkgs,
@@ -58,6 +57,7 @@
           nativeBuildInputs = with pkgs; [
             # often required for c/c++ libs
             pkg-config
+            rustPlatform.bindgenHook
           ]; # Intputs required for the HOST system
           # This is often requird for any ffi based packages that use bindgen
           # LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
@@ -65,6 +65,10 @@
           # PKG_CONFIG_PATH = lib.makeSearchPath "lib/pkgconfig" (with pkgs;[ openssl.dev zlib.dev ]);
         };
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+        hello = craneLib.buildPackage (commonArgs
+          // {
+            inherit cargoArtifacts;
+          });
       in {
         checks = {
           hello-clippy = craneLib.cargoClippy (commonArgs
@@ -82,11 +86,10 @@
               partitionType = "count";
             });
         };
+        packages.hello = hello;
 
         devShells.default = (craneLib.overrideToolchain stableToolchainWithRustAnalyzer).devShell (commonArgs
           // {
-            buildInputs = [];
-            nativeBuildInputs = [];
             packages = with pkgs; [
               cargo-nextest
               cargo-criterion
