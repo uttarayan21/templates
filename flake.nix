@@ -12,6 +12,10 @@
         path = ./rust/lib;
         description = "A simple rust library template using craneLib and rust-overlay";
       };
+      clang = {
+        path = ./clang;
+        description = "A simple clang template";
+      };
     };
   };
 }
