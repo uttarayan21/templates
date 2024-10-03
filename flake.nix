@@ -16,6 +16,10 @@
         path = ./rust/lib_ci;
         description = "A simple rust library template using craneLib and rust-overlay with Github Actions CI";
       };
+      frontend = {
+        path = ./frontend;
+        description = "A simple frontend template with yarn and nodejs";
+      };
       clang = {
         path = ./clang;
         description = "A simple clang template";
