@@ -52,11 +52,14 @@
         craneLib = (crane.mkLib pkgs).overrideToolchain stableToolchain;
         craneLibLLvmTools = (crane.mkLib pkgs).overrideToolchain stableToolchainWithLLvmTools;
 
-        sourceFilters = path: type: (craneLib.filterCargoSources path type) || (lib.hasSuffix ".c" path || lib.hasSuffix ".h" path);
-        src = lib.cleanSourceWith {
-          filter = sourceFilters;
-          src = ./.;
-        };
+        src = let
+          filterBySuffix = path: exts: lib.any (ext: lib.hasSuffix ext path) exts;
+          sourceFilters = path: type: (craneLib.filterCargoSources path type) || filterBySuffix path [".c" ".h" ".hpp" ".cpp" ".cc"];
+        in
+          lib.cleanSourceWith {
+            filter = sourceFilters;
+            src = ./.;
+          };
         commonArgs =
           {
             inherit src;
