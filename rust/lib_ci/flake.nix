@@ -64,6 +64,7 @@
           {
             inherit src;
             pname = "hello";
+            stdenv = pkgs.clangStdenv;
             doCheck = false;
             # LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
             # nativeBuildInputs = with pkgs; [
@@ -74,7 +75,7 @@
               []
               ++ (lib.optionals pkgs.stdenv.isDarwin [
                 libiconv
-                # darwin.apple_sdk.frameworks.Metal
+                apple-sdk_13
               ]);
           }
           // (lib.optionalAttrs pkgs.stdenv.isLinux {
@@ -120,7 +121,7 @@
         };
 
         devShells = {
-          default = pkgs.mkShell {
+          default = pkgs.mkShell.override {stdenv = pkgs.clangStdenv;} {
             packages = with pkgs;
               [
                 stableToolchainWithRustAnalyzer
@@ -128,7 +129,7 @@
                 cargo-deny
               ]
               ++ (lib.optionals pkgs.stdenv.isDarwin [
-                # darwin.apple_sdk.frameworks.Metal
+                apple-sdk_13
               ]);
           };
         };
