@@ -121,17 +121,18 @@
         };
 
         devShells = {
-          default = pkgs.mkShell.override {stdenv = pkgs.clangStdenv;} {
-            packages = with pkgs;
-              [
-                stableToolchainWithRustAnalyzer
-                cargo-nextest
-                cargo-deny
-              ]
-              ++ (lib.optionals pkgs.stdenv.isDarwin [
-                apple-sdk_13
-              ]);
-          };
+          default = pkgs.mkShell.override {stdenv = pkgs.clangStdenv;} (commonArgs
+            // {
+              packages = with pkgs;
+                [
+                  stableToolchainWithRustAnalyzer
+                  cargo-nextest
+                  cargo-deny
+                ]
+                ++ (lib.optionals pkgs.stdenv.isDarwin [
+                  apple-sdk_13
+                ]);
+            });
         };
       }
     )
