@@ -8,6 +8,14 @@
         path = ./rust/main;
         description = "A simple rust template using craneLib and rust-overlay";
       };
+      rust.cli = {
+        path = ./rust/cli;
+        description = "A simple rust template using craneLib and rust-overlay";
+      };
+      rust.sys = {
+        path = ./rust/sys;
+        description = "A simple rust template using craneLib and rust-overlay";
+      };
       rust.lib = {
         path = ./rust/lib;
         description = "A simple rust library template using craneLib and rust-overlay with Github Actions CI";
