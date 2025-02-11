@@ -1,5 +1,7 @@
 mod cli;
-pub fn main() {
+mod errors;
+use errors::*;
+pub fn main() -> Result<()> {
     let args = <cli::Cli as clap::Parser>::parse();
     match args.cmd {
         cli::SubCommand::Add(add) => {
@@ -12,4 +14,5 @@ pub fn main() {
             cli::Cli::completions(shell);
         }
     }
+    Ok(())
 }

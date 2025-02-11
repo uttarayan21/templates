@@ -1,1 +1,2 @@
-mod errors;
+pub mod errors;
+use errors::*;

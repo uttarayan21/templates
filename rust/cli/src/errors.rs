@@ -1,5 +1,4 @@
-use error_stack::{Report, ResultExt};
-
+pub use error_stack::{Report, ResultExt};
 #[derive(Debug, thiserror::Error)]
 #[error("An error occurred")]
 pub struct Error;
