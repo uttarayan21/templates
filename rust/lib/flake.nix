@@ -43,10 +43,10 @@
         inherit (pkgs) lib;
 
         stableToolchain = pkgs.rust-bin.stable.latest.default;
-        stableToolchainWithLLvmTools = pkgs.rust-bin.stable.latest.default.override {
+        stableToolchainWithLLvmTools = stableToolchain.override {
           extensions = ["rust-src" "llvm-tools"];
         };
-        stableToolchainWithRustAnalyzer = pkgs.rust-bin.stable.latest.default.override {
+        stableToolchainWithRustAnalyzer = stableToolchain.override {
           extensions = ["rust-src" "rust-analyzer"];
         };
         craneLib = (crane.mkLib pkgs).overrideToolchain stableToolchain;
