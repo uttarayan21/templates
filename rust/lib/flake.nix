@@ -35,12 +35,11 @@
           inherit system;
           overlays = [
             rust-overlay.overlays.default
-            # (final: prev: {
-            #   hello = hello-overlay.packages.${system}.hello.override {   };
-            # })
           ];
         };
         inherit (pkgs) lib;
+        cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+        name = cargoToml.package.name;
 
         stableToolchain = pkgs.rust-bin.stable.latest.default;
         stableToolchainWithLLvmTools = stableToolchain.override {
@@ -63,7 +62,7 @@
         commonArgs =
           {
             inherit src;
-            pname = "hello";
+            pname = name;
             stdenv = pkgs.clangStdenv;
             doCheck = false;
             # LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
@@ -85,26 +84,26 @@
       in {
         checks =
           {
-            hello-clippy = craneLib.cargoClippy (commonArgs
+            "${name}-clippy" = craneLib.cargoClippy (commonArgs
               // {
                 inherit cargoArtifacts;
                 cargoClippyExtraArgs = "--all-targets -- --deny warnings";
               });
-            hello-docs = craneLib.cargoDoc (commonArgs // {inherit cargoArtifacts;});
-            hello-fmt = craneLib.cargoFmt {inherit src;};
-            hello-toml-fmt = craneLib.taploFmt {
+            "${name}-docs" = craneLib.cargoDoc (commonArgs // {inherit cargoArtifacts;});
+            "${name}-fmt" = craneLib.cargoFmt {inherit src;};
+            "${name}-toml-fmt" = craneLib.taploFmt {
               src = pkgs.lib.sources.sourceFilesBySuffices src [".toml"];
             };
             # Audit dependencies
-            hello-audit = craneLib.cargoAudit {
+            "${name}-audit" = craneLib.cargoAudit {
               inherit src advisory-db;
             };
 
             # Audit licenses
-            hello-deny = craneLib.cargoDeny {
+            "${name}-deny" = craneLib.cargoDeny {
               inherit src;
             };
-            hello-nextest = craneLib.cargoNextest (commonArgs
+            "${name}-nextest" = craneLib.cargoNextest (commonArgs
               // {
                 inherit cargoArtifacts;
                 partitions = 1;
@@ -112,12 +111,26 @@
               });
           }
           // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
-            hello-llvm-cov = craneLibLLvmTools.cargoLlvmCov (commonArgs // {inherit cargoArtifacts;});
+            "${name}-llvm-cov" = craneLibLLvmTools.cargoLlvmCov (commonArgs // {inherit cargoArtifacts;});
           };
 
-        packages = rec {
-          hello = craneLib.buildPackage (commonArgs // {inherit cargoArtifacts;});
-          default = hello;
+        packages = let
+          pkg = craneLib.buildPackage (commonArgs
+            // {inherit cargoArtifacts;}
+            // {
+              postInstall = ''
+                mkdir -p $out/bin
+                mkdir -p $out/share/bash-completions
+                mkdir -p $out/share/fish/vendor_completions.d
+                mkdir -p $out/share/zsh/site-functions
+                $out/bin/${name} completions bash > $out/share/bash-completions/${name}.bash
+                $out/bin/${name} completions fish > $out/share/fish/vendor_completions.d/${name}.fish
+                $out/bin/${name} completions zsh > $out/share/zsh/site-functions/_${name}
+              '';
+            });
+        in {
+          "${name}" = pkg;
+          default = pkg;
         };
 
         devShells = {
