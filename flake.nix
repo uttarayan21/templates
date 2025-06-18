@@ -12,6 +12,10 @@
         path = ./rust/cli;
         description = "A simple rust template using craneLib and rust-overlay";
       };
+      rust.bevy = {
+        path = ./rust/cli;
+        description = "A simple rust template using craneLib and rust-overlay for bevy";
+      };
       rust.sys = {
         path = ./rust/sys;
         description = "A simple rust template using craneLib and rust-overlay";
