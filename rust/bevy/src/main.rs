@@ -39,6 +39,4 @@ fn setup(mut commands: Commands) {
         Transform::default(),
         Visibility::default(),
     ));
-    // commands.spawn(point_light());
-    // commands.spawn(ui());
 }
