@@ -13,7 +13,7 @@
         description = "A simple rust template using craneLib and rust-overlay";
       };
       rust.bevy = {
-        path = ./rust/cli;
+        path = ./rust/bevy;
         description = "A simple rust template using craneLib and rust-overlay for bevy";
       };
       rust.sys = {
