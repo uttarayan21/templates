@@ -24,6 +24,10 @@
         path = ./rust/lib;
         description = "A simple rust library template using craneLib and rust-overlay with Github Actions CI";
       };
+      rust.dioxus = {
+        path = ./rust/dioxus;
+        description = "Dioxus template using craneLib and rust-overlay";
+      };
       frontend = {
         path = ./frontend;
         description = "A simple frontend template with yarn and nodejs";
