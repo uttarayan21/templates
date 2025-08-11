@@ -36,6 +36,10 @@
         path = ./clang;
         description = "A simple clang template";
       };
+      python = {
+        path = ./python;
+        description = "A simple python template";
+      };
     };
   };
 }
