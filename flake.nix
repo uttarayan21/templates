@@ -37,8 +37,12 @@
         description = "A simple clang template";
       };
       python = {
-        path = ./python;
+        path = ./python/default;
         description = "A simple python template";
+      };
+      atopile = {
+        path = ./python/atopile;
+        description = "A atopile template";
       };
     };
   };
