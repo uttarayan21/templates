@@ -120,7 +120,7 @@
               ])
               ++ (lib.optionals pkgs.stdenv.isDarwin [
                 libiconv
-                apple-sdk_13
+                apple-sdk_26
               ]);
 
             nativeBuildInputs = with pkgs; [
@@ -197,7 +197,7 @@
                   wasm-bindgen-cli
                 ]
                 ++ (lib.optionals pkgs.stdenv.isDarwin [
-                  apple-sdk_13
+                  apple-sdk_26
                 ]);
             });
         };

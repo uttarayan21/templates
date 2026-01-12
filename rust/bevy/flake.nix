@@ -83,7 +83,7 @@
             ])
             ++ (lib.optionals pkgs.stdenv.isDarwin [
               libiconv
-              apple-sdk_13
+              apple-sdk_26
             ]);
         };
         cargoArtifacts = craneLib.buildPackage commonArgs;
@@ -162,7 +162,7 @@
                     lld
                   ]
                   ++ (lib.optionals pkgs.stdenv.isDarwin [
-                    apple-sdk_13
+                    apple-sdk_26
                   ])
                   ++ (lib.optionals pkgs.stdenv.isLinux [
                     mold
