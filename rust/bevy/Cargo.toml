@@ -14,10 +14,10 @@ thiserror = "2.0"
 tokio = "1.43.1"
 tracing = "0.1"
 tracing-subscriber = "0.3"
-bevy = { version = "0.16.0", features = [
+bevy = { version = "0.17", features = [
   "bevy_pbr",
   "dynamic_linking",
   "wayland",
 ] }
-bevy_debug_grid = "0.7.0"
-bevy_panorbit_camera = "0.26.0"
+bevy_debug_grid = "0.8"
+bevy_panorbit_camera = "0.33"
