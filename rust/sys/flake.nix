@@ -115,19 +115,10 @@
           };
 
         packages = let
-          pkg = craneLib.buildPackage (commonArgs
+          pkg = craneLib.buildPackage (
+            commonArgs
             // {inherit cargoArtifacts;}
-            // {
-              postInstall = ''
-                mkdir -p $out/bin
-                mkdir -p $out/share/bash-completions
-                mkdir -p $out/share/fish/vendor_completions.d
-                mkdir -p $out/share/zsh/site-functions
-                $out/bin/${name} completions bash > $out/share/bash-completions/${name}.bash
-                $out/bin/${name} completions fish > $out/share/fish/vendor_completions.d/${name}.fish
-                $out/bin/${name} completions zsh > $out/share/zsh/site-functions/_${name}
-              '';
-            });
+          );
         in {
           "${name}" = pkg;
           default = pkg;
