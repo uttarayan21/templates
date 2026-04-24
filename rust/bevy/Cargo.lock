@@ -2379,9 +2379,9 @@ dependencies = [
 
 [[package]]
 name = "error-stack"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b878b3fac9613c3c7f22eb70bc8a3c6ebdc03cc11479ee60fde1692d747fd45f"
+checksum = "99a1a66f27cc1b82d6b8c2d24b3b1e90e6e67004a448081bbe58bd537f72a7c8"
 dependencies = [
  "anyhow",
  "rustc_version",
@@ -2804,9 +2804,9 @@ dependencies = [
 
 [[package]]
 name = "grid"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9e2d4c0a8296178d8802098410ca05d86b17a10bb5ab559b3fb404c1f948220"
+checksum = "b40ca9252762c466af32d0b1002e91e4e1bc5398f77455e55474deb466355ff5"
 
 [[package]]
 name = "guillotiere"
