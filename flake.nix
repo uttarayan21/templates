@@ -22,7 +22,7 @@
     };
   };
 
-  outputs = {self}: {
+  outputs = {self, ...}: {
     templates = {
       rust.crate = {
         path = ./rust/main;
