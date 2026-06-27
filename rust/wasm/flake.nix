@@ -2,21 +2,13 @@
   description = "A simple rust flake using rust-overlay and craneLib";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    crane.url = "github:ipetkov/crane";
-    nix-github-actions = {
-      url = "github:uttarayan21/nix-github-actions";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    advisory-db = {
-      url = "github:rustsec/advisory-db";
-      flake = false;
-    };
+    main.url = "github:uttarayan21/templates";
+    nixpkgs.follows = "main/nixpkgs";
+    flake-utils.follows = "main/flake-utils";
+    crane.follows = "main/crane";
+    nix-github-actions.follows = "main/nix-github-actions";
+    rust-overlay.follows = "main/rust-overlay";
+    advisory-db.follows = "main/advisory-db";
   };
 
   outputs = {

@@ -1,6 +1,10 @@
 {
   description = "Simple python flake";
-  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs = {
+    main.url = "github:uttarayan21/templates";
+    nixpkgs.follows = "main/nixpkgs";
+    flake-utils.follows = "main/flake-utils";
+  };
 
   outputs = {
     self,

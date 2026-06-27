@@ -2,8 +2,9 @@
   description = "A very basic clang devshell flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    main.url = "github:uttarayan21/templates";
+    nixpkgs.follows = "main/nixpkgs";
+    flake-utils.follows = "main/flake-utils";
   };
 
   outputs = {
