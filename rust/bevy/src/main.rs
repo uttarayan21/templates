@@ -1,14 +1,18 @@
 mod errors;
 use bevy::prelude::*;
+
+const GRID_SPACING: f32 = 10.0;
+const GRID_CELLS: u32 = 16;
+
 pub fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
         .add_plugins((
             DefaultPlugins,
-            bevy_debug_grid::DebugGridPlugin::without_floor_grid(),
             bevy_panorbit_camera::PanOrbitCameraPlugin,
         ))
         .add_systems(Startup, setup)
+        .add_systems(Update, draw_grid)
         .run();
 }
 
@@ -24,19 +28,32 @@ fn setup(mut commands: Commands) {
         },
         Transform::from_xyz(50.0, -50.0, 50.0).looking_at(Vec3::ZERO, Vec3::Z),
     ));
-    commands.spawn((
-        bevy_debug_grid::Grid {
-            spacing: 10.0_f32,
-            count: 16,
-            ..default()
-        },
-        bevy_debug_grid::SubGrid::default(),
-        bevy_debug_grid::GridAxis::new_rgb(),
-        bevy_debug_grid::TrackedGrid {
-            alignment: bevy_debug_grid::GridAlignment::Z,
-            ..default()
-        },
-        Transform::default(),
-        Visibility::default(),
-    ));
+}
+
+fn draw_grid(mut gizmos: Gizmos) {
+    gizmos.grid(
+        Quat::IDENTITY,
+        UVec2::splat(GRID_CELLS),
+        Vec2::splat(GRID_SPACING),
+        Color::srgb(0.35, 0.35, 0.35),
+    );
+
+    let axis_length = GRID_SPACING * GRID_CELLS as f32 * 0.5;
+    let axis_offset = 0.05;
+
+    gizmos.line(
+        Vec3::new(-axis_length, 0.0, axis_offset),
+        Vec3::new(axis_length, 0.0, axis_offset),
+        Color::srgb(1.0, 0.2, 0.2),
+    );
+    gizmos.line(
+        Vec3::new(0.0, -axis_length, axis_offset),
+        Vec3::new(0.0, axis_length, axis_offset),
+        Color::srgb(0.2, 1.0, 0.2),
+    );
+    gizmos.line(
+        Vec3::ZERO,
+        Vec3::new(0.0, 0.0, axis_length),
+        Color::srgb(0.2, 0.4, 1.0),
+    );
 }
