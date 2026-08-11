@@ -24,13 +24,17 @@
 
   outputs = {self, ...}: {
     templates = {
-      rust.crate = {
-        path = ./rust/main;
-        description = "A simple rust template using craneLib and rust-overlay";
-      };
       rust.cli = {
         path = ./rust/cli;
         description = "A simple rust template using craneLib and rust-overlay";
+      };
+      rust.crates = {
+        path = ./rust/crates;
+        description = "A simple rust template using craneLib, rust-overlay and crates.nix";
+      };
+      rust.wasm = {
+        path = ./rust/wasm;
+        description = "A rust wasm template using craneLib and rust-overlay";
       };
       rust.bevy = {
         path = ./rust/bevy;
@@ -55,6 +59,10 @@
       clang = {
         path = ./clang;
         description = "A simple clang template";
+      };
+      shell = {
+        path = ./shell;
+        description = "A simple shell devshell template";
       };
       python = {
         path = ./python/default;
