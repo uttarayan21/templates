@@ -22,7 +22,7 @@
     };
   };
 
-  outputs = {self, ...}: {
+  outputs = {self, ...}: rec {
     templates = {
       rust.cli = {
         path = ./rust/cli;
@@ -72,6 +72,73 @@
         path = ./python/atopile;
         description = "A atopile template";
       };
+    };
+
+    # `om init` template registry.
+    # https://omnix.page/om/init.html#spec
+    #
+    # Every template here is also a plain `nix flake init -t` template above;
+    # the extra `params` are what let `om init` substitute the placeholder
+    # names instead of you search-replacing them by hand.
+    om.templates = let
+      # The rust templates all ship a crate literally named `hello`. The flake
+      # reads the name back out of Cargo.toml, so replacing it there also fixes
+      # every derivation name; the workflow files hardcode it and need the same
+      # substitution.
+      packageName = {
+        name = "package-name";
+        description = "Name of the Rust package";
+        placeholder = "hello";
+      };
+      githubCI = {
+        name = "github-ci";
+        description = "Include GitHub Actions workflow configuration";
+        paths = [".github"];
+        value = true;
+      };
+      # Scaffold-only assertions: cheap, run on every system.
+      sourceTest = params: source: {
+        default = {
+          inherit params;
+          asserts.source = source;
+        };
+      };
+      rust = template: {
+        inherit template;
+        params = [packageName githubCI];
+        tests = sourceTest {package-name = "qux";} {
+          "Cargo.toml" = true;
+          "flake.nix" = true;
+          ".github/workflows/build.yaml" = true;
+        };
+      };
+      bare = template: {
+        inherit template;
+        params = [];
+      };
+    in {
+      rust-cli = rust templates.rust.cli;
+      rust-crates = rust templates.rust.crates;
+      rust-wasm = rust templates.rust.wasm;
+      rust-bevy = rust templates.rust.bevy;
+      rust-sys = rust templates.rust.sys;
+      rust-lib = rust templates.rust.lib;
+      # No .github and no Cargo.toml; the name is hardcoded in its flake.
+      rust-dioxus = {
+        template = templates.rust.dioxus;
+        params = [
+          {
+            name = "package-name";
+            description = "Name of the Rust package";
+            placeholder = "darksailor.dev";
+          }
+        ];
+      };
+      frontend = bare templates.frontend;
+      clang = bare templates.clang;
+      shell = bare templates.shell;
+      python = bare templates.python;
+      atopile = bare templates.atopile;
     };
   };
 }
