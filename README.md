@@ -57,14 +57,33 @@ nix flake init -t github:uttarayan21/templates#rust.cli
 
 The rust templates take:
 
-- `package-name` — replaces `template-package-name` in `Cargo.toml`,
-  `Cargo.lock` and the workflow files. The flake reads the name back out of
-  `Cargo.toml`, so this also renames every derivation and the built binary.
+- `package-name` — replaces `template-package-name` in `Cargo.toml` and
+  `Cargo.lock`. That is the whole substitution: the flake reads the name back
+  out of `Cargo.toml`, so it also renames every derivation and the built
+  binary, and the workflows resolve it themselves (see below).
 - `github-ci` — answer `no` to drop `.github/`.
 
 `rust-dioxus` takes `package-name` only (its name is hardcoded in its
 `flake.nix`, and it ships no `.github/`). The non-rust templates take no
 parameters.
+
+### How the workflows find the package name
+
+They don't — they never mention it. Each rust flake exposes every check under
+two names pointing at the same derivation:
+
+```
+checks.x86_64-linux.docs                          # bare
+checks.x86_64-linux.<package-name>-docs           # prefixed
+```
+
+`nix flake check` and the CI matrix use the prefixed names, so job labels stay
+readable. The `codecov` and `docs` jobs, which need one fixed attribute path,
+use the bare ones and therefore work under any package name. The GitHub matrix
+is filtered to the prefixed set so the aliases don't double every row.
+
+The codecov upload label uses `${{ github.event.repository.name }}` rather than
+the crate name, for the same reason.
 
 ### Why the placeholder looks like that
 

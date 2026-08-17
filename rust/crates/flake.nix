@@ -36,7 +36,13 @@
     advisory-db,
     nix-github-actions,
     ...
-  }:
+  }: let
+    # Read outside eachSystem: the crate name is system-independent, and the
+    # githubActions matrix below needs it to tell the canonical checks apart
+    # from their unprefixed aliases.
+    cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+    name = cargoToml.package.name;
+  in
     flake-utils.lib.eachSystem [
       "x86_64-linux"
       "aarch64-linux"
@@ -50,8 +56,6 @@
           ];
         };
         inherit (pkgs) lib;
-        cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
-        name = cargoToml.package.name;
 
         stableToolchain = pkgs.rust-bin.stable.latest.default;
         stableToolchainWithLLvmTools = stableToolchain.override {
@@ -94,37 +98,47 @@
           });
         cargoArtifacts = craneLib.buildPackage commonArgs;
       in {
-        checks =
-          {
-            "${name}-clippy" = craneLib.cargoClippy (commonArgs
-              // {
-                inherit cargoArtifacts;
-                cargoClippyExtraArgs = "--all-targets -- --deny warnings";
-              });
-            "${name}-docs" = craneLib.cargoDoc (commonArgs // {inherit cargoArtifacts;});
-            "${name}-fmt" = craneLib.cargoFmt {inherit src;};
-            "${name}-toml-fmt" = craneLib.taploFmt {
-              src = pkgs.lib.sources.sourceFilesBySuffices src [".toml"];
-            };
-            # Audit dependencies
-            "${name}-audit" = craneLib.cargoAudit {
-              inherit src advisory-db;
-            };
+        checks = let
+          # Keyed by what the check is rather than what the crate is called, so
+          # that CI can reference a fixed attribute path without knowing the
+          # package name.
+          byKind =
+            {
+              clippy = craneLib.cargoClippy (commonArgs
+                // {
+                  inherit cargoArtifacts;
+                  cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+                });
+              docs = craneLib.cargoDoc (commonArgs // {inherit cargoArtifacts;});
+              fmt = craneLib.cargoFmt {inherit src;};
+              toml-fmt = craneLib.taploFmt {
+                src = pkgs.lib.sources.sourceFilesBySuffices src [".toml"];
+              };
+              # Audit dependencies
+              audit = craneLib.cargoAudit {
+                inherit src advisory-db;
+              };
 
-            # Audit licenses
-            "${name}-deny" = craneLib.cargoDeny {
-              inherit src;
+              # Audit licenses
+              deny = craneLib.cargoDeny {
+                inherit src;
+              };
+              nextest = craneLib.cargoNextest (commonArgs
+                // {
+                  inherit cargoArtifacts;
+                  partitions = 1;
+                  partitionType = "count";
+                });
+            }
+            // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
+              llvm-cov = craneLibLLvmTools.cargoLlvmCov (commonArgs // {inherit cargoArtifacts;});
             };
-            "${name}-nextest" = craneLib.cargoNextest (commonArgs
-              // {
-                inherit cargoArtifacts;
-                partitions = 1;
-                partitionType = "count";
-              });
-          }
-          // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
-            "${name}-llvm-cov" = craneLibLLvmTools.cargoLlvmCov (commonArgs // {inherit cargoArtifacts;});
-          };
+        in
+          # Both spellings are exposed, pointing at the same derivations:
+          # `nix flake check` and the CI matrix read the prefixed names, while
+          # anything that cannot know the crate name uses the bare ones.
+          byKind
+          // lib.mapAttrs' (kind: check: lib.nameValuePair "${name}-${kind}" check) byKind;
 
         packages = let
           pkg = craneLib.buildPackage (commonArgs
@@ -163,7 +177,12 @@
     )
     // {
       githubActions = nix-github-actions.lib.mkGithubMatrix {
-        checks = nixpkgs.lib.getAttrs ["x86_64-linux"] self.checks;
+        # Only the prefixed checks; the bare aliases are the same derivations
+        # and would otherwise double every row of the matrix.
+        checks =
+          builtins.mapAttrs
+          (_system: nixpkgs.lib.filterAttrs (attr: _: nixpkgs.lib.hasPrefix "${name}-" attr))
+          (nixpkgs.lib.getAttrs ["x86_64-linux"] self.checks);
       };
     };
 }
