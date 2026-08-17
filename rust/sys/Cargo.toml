@@ -11,7 +11,7 @@ thiserror = "2.0"
 tracing = "0.1"
 
 [build-dependencies]
-bindgen = { version = "0.71.1", optional = true }
+bindgen = { version = "0.72.1", optional = true }
 cc = "1.2.12"
 error-stack = "0.8"
 ignore = "0.4.23"
