@@ -57,21 +57,35 @@ nix flake init -t github:uttarayan21/templates#rust.cli
 
 The rust templates take:
 
-- `package-name` — replaces `hello` in `Cargo.toml`, `Cargo.lock` and the
-  workflow files. The flake reads the name back out of `Cargo.toml`, so this
-  also renames every derivation and the built binary.
+- `package-name` — replaces `template-package-name` in `Cargo.toml`,
+  `Cargo.lock` and the workflow files. The flake reads the name back out of
+  `Cargo.toml`, so this also renames every derivation and the built binary.
 - `github-ci` — answer `no` to drop `.github/`.
 
 `rust-dioxus` takes `package-name` only (its name is hardcoded in its
-`flake.nix` as `darksailor.dev`, and it ships no `.github/`). The non-rust
-templates take no parameters.
+`flake.nix`, and it ships no `.github/`). The non-rust templates take no
+parameters.
+
+### Why the placeholder looks like that
+
+`om init` substitutes by plain substring replacement across every file — it has
+no AST awareness, and no hook to add any. So the placeholder has to be a string
+that cannot show up by accident. The templates used to be named `hello`, which
+would have quietly rewritten "hello world" in any prose that ever got added.
+`template-package-name` cannot collide, and tells anyone scaffolding by hand
+what to replace.
 
 ## Development
 
 The template registry lives in [`flake.nix`](./flake.nix) under `om.templates`.
-After changing it, check that scaffolding still works:
+After changing it:
 
 ```sh
-nix eval --json .#om   # registry evaluates
-om init --test .       # every template scaffolds and asserts
+nix eval --json .#om                    # registry evaluates
+om init --test .                        # every template scaffolds
+python3 scripts/check_placeholder.py    # substitution is complete
 ```
+
+The last one scaffolds each template with a sentinel and fails if a
+`Cargo.toml` name has drifted away from the declared placeholder — which would
+silently produce crates with the wrong name. All three run in CI.

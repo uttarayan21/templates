@@ -19,15 +19,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hello"
-version = "0.1.0"
-dependencies = [
- "error-stack",
- "thiserror",
- "tracing",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -81,6 +72,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "template-package-name"
+version = "0.1.0"
+dependencies = [
+ "error-stack",
+ "thiserror",
+ "tracing",
 ]
 
 [[package]]

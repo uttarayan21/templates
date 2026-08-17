@@ -81,14 +81,20 @@
     # the extra `params` are what let `om init` substitute the placeholder
     # names instead of you search-replacing them by hand.
     om.templates = let
-      # The rust templates all ship a crate literally named `hello`. The flake
-      # reads the name back out of Cargo.toml, so replacing it there also fixes
-      # every derivation name; the workflow files hardcode it and need the same
-      # substitution.
+      # `om init` substitutes placeholders by plain substring replacement over
+      # every file, so the placeholder must be a string that cannot occur by
+      # accident. `template-package-name` is deliberately unpronounceable in
+      # prose; a natural word like `hello` would also rewrite "hello world" in
+      # a README. scripts/check_placeholder.py enforces this.
+      #
+      # The rust flakes read the name back out of Cargo.toml, so replacing it
+      # there also renames every derivation; the workflow files hardcode it and
+      # need the same substitution.
+      placeholder = "template-package-name";
       packageName = {
         name = "package-name";
         description = "Name of the Rust package";
-        placeholder = "hello";
+        inherit placeholder;
       };
       githubCI = {
         name = "github-ci";
@@ -126,13 +132,7 @@
       # No .github and no Cargo.toml; the name is hardcoded in its flake.
       rust-dioxus = {
         template = templates.rust.dioxus;
-        params = [
-          {
-            name = "package-name";
-            description = "Name of the Rust package";
-            placeholder = "darksailor.dev";
-          }
-        ];
+        params = [packageName];
       };
       frontend = bare templates.frontend;
       clang = bare templates.clang;

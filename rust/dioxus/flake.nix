@@ -38,7 +38,7 @@
         inherit (pkgs) lib;
         # cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
         # name = cargoToml.package.name;
-        name = "darksailor.dev";
+        name = "template-package-name";
         crates = crates-nix.mkLib {inherit pkgs;};
         dioxus-cli = with pkgs; (crates.buildCrate "dioxus-cli" {
           buildFeatures = [
