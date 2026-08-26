@@ -1,0 +1,131 @@
+name: update-flakes
+
+# Weekly `nix flake update` for every flake.lock in the repo, opened as a PR.
+# Every template flake `follows` the root flake (main.url = the templates repo),
+# so the root lock is what actually drives all of their inputs.
+on:
+  schedule:
+    # Every Monday at 04:00 UTC
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+# Gitea injects a per-run, repo-scoped token as `github.token` (also exposed as
+# secrets.GITHUB_TOKEN / secrets.GITEA_TOKEN). Whether it may WRITE depends on the
+# instance/repo Actions permission setting, which `permissions:` requests here.
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  # The reverse proxy in front of Gitea 403s any `curl/*` User-Agent; every API
+  # call sends this instead (any non-curl UA passes).
+  TEMPLATES_UA: templates-update-flakes-ci
+  UPDATE_BRANCH: ci/update-flakes
+
+jobs:
+  update-flakes:
+    runs-on: nix
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update every flake.lock in the repo
+        id: update
+        run: |
+          set -Eeuo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          summary=""
+          while IFS= read -r lock; do
+            dir="$(dirname "$lock")"
+            echo "::group::nix flake update in $dir"
+            nix flake update --flake "$dir"
+            echo "::endgroup::"
+            label="${dir#./}"; [ "$label" = "." ] && label="<root>"
+            summary="${summary}- \`${label}\`"$'\n'
+          done < <(find . -name flake.lock -not -path './.git/*' | sort)
+          {
+            echo "dirs<<EOF"
+            printf '%s' "$summary"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          if git diff --quiet -- '*flake.lock'; then
+            echo "no input updates available"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check the updated locks resolve
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          set -Eeuo pipefail
+          while IFS= read -r lock; do
+            dir="$(dirname "$lock")"
+            echo "::group::nix flake metadata $dir"
+            nix flake metadata "$dir"
+            echo "::endgroup::"
+          done < <(find . -name flake.lock -not -path './.git/*' | sort)
+
+      - name: Push branch and open PR
+        if: steps.update.outputs.changed == 'true'
+        # Secret at STEP scope — the most portable place for the `secrets`
+        # context (Gitea/act does not resolve it in job-level env).
+        #
+        # Prefers the built-in token and falls back to a PAT only if you set
+        # one. This does not mask failures: a token without write permission
+        # makes the push or the /pulls call fail the step loudly below. If that
+        # happens, either flip the repo's Actions workflow permissions to
+        # read-write, or add a CI_TOKEN secret (PAT with repository
+        # contents:write + pull_requests:write).
+        env:
+          CI_TOKEN: ${{ secrets.CI_TOKEN || github.token }}
+        run: |
+          set -Eeuo pipefail
+          curl() { command curl -A "$TEMPLATES_UA" "$@"; }
+          [ -n "${CI_TOKEN:-}" ] || { echo "error: no token available (CI_TOKEN and github.token both empty)"; exit 1; }
+
+          BASE="${{ github.event.repository.default_branch }}"
+          API="${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}"
+          AUTH="Authorization: token ${CI_TOKEN}"
+          HOST="${GITHUB_SERVER_URL#https://}"
+
+          git config user.name "gitea-actions"
+          git config user.email "gitea-actions@noreply.${HOST}"
+          git checkout -B "$UPDATE_BRANCH"
+          git add -- '*flake.lock'
+          git commit -m "chore: Update flake inputs"
+          # actions/checkout leaves its own `Authorization: basic` extraheader for
+          # this host in .git/config; drop it so the credential in the push URL
+          # is unambiguously the one used (exit 5 = key absent, which is fine).
+          git config --local --unset-all "http.${GITHUB_SERVER_URL}/.extraheader" || true
+          # Force-push: the branch is regenerated from base every run, so an
+          # older un-merged update is replaced rather than merged into.
+          git push --force "https://oauth2:${CI_TOKEN}@${HOST}/${GITHUB_REPOSITORY}.git" \
+            "HEAD:refs/heads/${UPDATE_BRANCH}"
+
+          # Idempotent: an open PR for this branch is reused (the force-push
+          # already refreshed its diff), else a new one is created.
+          existing="$(curl -s -H "$AUTH" "$API/pulls?state=open&limit=50" \
+            | jq -r --arg b "$UPDATE_BRANCH" '[.[] | select(.head.ref == $b)][0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "reusing open PR #$existing"
+            exit 0
+          fi
+
+          body="$(printf 'Weekly automated `nix flake update`.\n\nFlakes updated:\n\n%s\nEvery template flake `follows` the root flake, so the root lock drives the inputs for all of them.\n' \
+            '${{ steps.update.outputs.dirs }}')"
+          jq -n --arg t "chore: Update flake inputs" --arg b "$body" \
+                --arg head "$UPDATE_BRANCH" --arg base "$BASE" \
+            '{title:$t, body:$b, head:$head, base:$base}' > payload.json
+          resp="$(curl -s -w '\n%{http_code}' -X POST -H "$AUTH" \
+            -H 'Content-Type: application/json' -d @payload.json "$API/pulls")"
+          code="$(printf '%s' "$resp" | tail -n1)"
+          out="$(printf '%s' "$resp" | sed '$d')"
+          echo "pulls API -> HTTP $code"
+          case "$code" in
+            2*) echo "opened PR #$(printf '%s' "$out" | jq -r '.number')" ;;
+            *)  echo "pulls API error body: $out"; exit 1 ;;
+          esac

@@ -1,0 +1,68 @@
+name: update-flakes
+
+on:
+  schedule:
+    # Every Monday at 04:00 UTC
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-flakes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Update every flake.lock in the repo
+        id: update
+        run: |
+          set -Eeuo pipefail
+          summary=""
+          while IFS= read -r lock; do
+            dir="$(dirname "$lock")"
+            echo "::group::nix flake update in $dir"
+            nix flake update --flake "$dir"
+            echo "::endgroup::"
+            label="${dir#./}"; [ "$label" = "." ] && label="<root>"
+            summary="${summary}- \`${label}\`"$'\n'
+          done < <(find . -name flake.lock -not -path './.git/*' | sort)
+          {
+            echo "dirs<<EOF"
+            printf '%s' "$summary"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check the updated locks resolve
+        run: |
+          set -Eeuo pipefail
+          while IFS= read -r lock; do
+            dir="$(dirname "$lock")"
+            echo "::group::nix flake metadata $dir"
+            nix flake metadata "$dir"
+            echo "::endgroup::"
+          done < <(find . -name flake.lock -not -path './.git/*' | sort)
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: Update flake inputs"
+          title: "chore: Update flake inputs"
+          body: |
+            Weekly automated `nix flake update`.
+
+            Flakes updated:
+
+            ${{ steps.update.outputs.dirs }}
+
+            Every template flake `follows` the root flake, so the root lock
+            drives the inputs for all of them.
+          branch: ci/update-flakes
+          delete-branch: true
+          # Pathspec, not a shell glob: bare `**/flake.lock` needs a literal
+          # `/` and so would skip the root lock (the one that matters).
+          add-paths: |
+            *flake.lock
